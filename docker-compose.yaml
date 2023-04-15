@@ -2,7 +2,6 @@ volumes:
   app_config:
   quay-db-data:
   app_storage:
-  app_config:
   app_log:
   app_tmp:
 
