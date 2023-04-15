@@ -1,0 +1,84 @@
+volumes:
+  app_config:
+  quay-db-data:
+  app_storage:
+  app_config:
+  app_log:
+  app_tmp:
+
+networks:
+  default:
+    name: quay
+
+services:
+  config:
+    profiles:
+      - config
+    command: config secret
+    image: quay.io/projectquay/quay:latest
+    ports:
+      - 8080:8080
+
+  app:
+    container_name: quay
+    image: quay.io/projectquay/quay:latest
+    restart: unless-stopped
+    volumes:
+      - app_storage:/datastorage
+      - "./config.yaml:/quay-registry/conf/stack/config.yaml"
+      - app_log:/var/log
+      - app_tmp:/tmp
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.quay-app.rule=Host(`quay.localhost.direct`)'
+      - "traefik.http.services.quay-app.loadbalancer.server.port=8080"
+      - 'traefik.http.routers.quay-app.entrypoints=web,websecure'
+
+  redis:
+    user: nobody
+    container_name: quay-redis
+    restart: unless-stopped
+    image: docker.io/library/redis:latest
+
+  quay-db:
+    user: postgres
+    container_name: quay-db
+    restart: unless-stopped
+    image: docker.io/library/postgres:12.1
+    environment:
+      POSTGRES_USER: "quay"
+      POSTGRES_PASSWORD: "quay"
+      POSTGRES_DB: "quay"
+    volumes:
+      - "./pg_bootstrap.sql:/docker-entrypoint-initdb.d/pg_bootstrap.sql"
+      - "quay-db-data:/var/lib/postgresql/data"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quay -d quay"]
+      interval: 10s
+      timeout: 9s
+      retries: 3
+      start_period: 10s
+
+
+  traefik:
+    build: .
+    image: avogt/traefik-with-localhost-tls:2.10
+    ports:
+      - '80:80'
+      - '443:443'
+      - '8888:8080'
+    command:
+      - --providers.file.filename=/traefik_conf.yml
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.web.http.redirections.entryPoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls=true
+      - --providers.docker=true
+      - --providers.docker.watch=true
+      - --providers.docker.exposedbydefault=false
+      - --api
+      - --api.insecure=true
+      - --api.dashboard=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
