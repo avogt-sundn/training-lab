@@ -1,10 +1,25 @@
 # Wir bauen uns eine Labor-Umgebung
 
+Ziel:
+- installieren aller Dienste mittels docker compose
+- problemloser Zugriff ohne weitere lokale Konfigurationen
+
 ## Quay - eine eigene Docker registry
 
-Ziel:
-- installieren von quay mittels docker compose
+Das upstream opensource Projekt für die Red Hat Quay Registry baut und veröffentlicht die Quay Registry als Docker Image auf <https://quay.io/repository/project-quay/quay>. Davon benutzen wir das image `quay.io/projectquay/quay:latest`.
 
+Wir werden Quay einsetzen als Docker Registry.
+
+## Sonatype Nexus OSS
+
+Sonatype veröffentlicht ihren Nexus Repository Manager als Docker Image auf <https://hub.docker.com/r/sonatype/nexus3>. Davon benutzen wir das image `sonatype/nexus3:latest`.
+
+Wir werden Nexus einsetzen als Docker Registry, als Maven Repository und als NPM Repository.
+## Traefik als Reverse Proxy mit SSL Terminierung
+
+Traefik ist ein Reverse Proxy mit SSL Terminierung. Wir benutzen das Image `avogt/traefik-with-localhost-tls:2.10`. Dieses habe ich selber von traefik:2.10 abgeleitet, ergänzt um ein SSL-Zertifikat für `*.localhost.direct`, ein sogenanntes wildcard-Zertifikat. Dieses Zertifikat wird von Traefik verwendet, um SSL-Verschlüsselung für alle Subdomains von `localhost.direct` so anzubieten, dass alle Browser und http-basierte Werkzeuge wie `maven`, `npm`, `docker`, `kubernetes` usw. damit zurecht kommen. Dieses Image ist auf <https://hub.docker.com/r/avogt/traefik-with-localhost-tls> zu finden, der source code findet sich unter <https://github.com/avogt-sundn/quay-with-traefik-tls>.
+
+Das benutzte SSL-Zertifikat ist nicht auf eine IP-Adresse beschränkt. Das erlaubt uns, den traefik als Webserver auf einer von uns frei gewählte IP-Adresse erreichbar zu machen. Es fehlt nur der DNS-Eintrag, der die IP-Adresse mit dem Domainnamen verknüpft. Diesen Eintrag können wir selbst vornehmen, lokale in der `/etc/hosts` Datei oder mit Hilfe eines DNS service, der unter unserer Kontrolle ist.
 
 ### Links
 

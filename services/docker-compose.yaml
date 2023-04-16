@@ -4,12 +4,14 @@ volumes:
   app_storage:
   app_log:
   app_tmp:
+  nexus-data:
 
 networks:
   default:
     name: quay
 
 services:
+
   config:
     profiles:
       - config
@@ -58,6 +60,15 @@ services:
       retries: 3
       start_period: 10s
 
+  nexus:
+    image: sonatype/nexus3
+    volumes:
+      - nexus-data:/nexus-data
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.nexus-app.rule=Host(`nexus.localhost.direct`)'
+      - "traefik.http.services.nexus-app.loadbalancer.server.port=8081"
+      - 'traefik.http.routers.nexus-app.entrypoints=web,websecure'
 
   traefik:
     build: .
