@@ -34,6 +34,9 @@ services:
       - 'traefik.http.routers.quay-app.rule=Host(`quay.localhost.direct`)'
       - "traefik.http.services.quay-app.loadbalancer.server.port=8080"
       - 'traefik.http.routers.quay-app.entrypoints=web,websecure'
+    depends_on:
+      quay-db:
+        condition: service_healthy
 
   redis:
     user: nobody
@@ -61,6 +64,7 @@ services:
       start_period: 10s
 
   nexus:
+    container_name: nexus
     image: sonatype/nexus3
     restart: unless-stopped
     volumes:
@@ -72,6 +76,7 @@ services:
       - 'traefik.http.routers.nexus-app.entrypoints=web,websecure'
 
   traefik:
+    container_name: traefik
     restart: unless-stopped
     image: avogt/traefik-with-localhost-tls:2.10
     ports:
