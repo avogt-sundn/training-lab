@@ -5,6 +5,8 @@ volumes:
   app_log:
   app_tmp:
   nexus-data:
+  gitea:
+  gitea-db-data:
 
 networks:
   default:
@@ -19,6 +21,49 @@ services:
     image: quay.io/projectquay/quay:latest
     ports:
       - 8080:8080
+
+  gitea:
+    image: gitea/gitea
+    container_name: gitea
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__database__DB_TYPE=postgres
+      - GITEA__database__HOST=gitea-db:5432
+      - GITEA__database__NAME=gitea
+      - GITEA__database__USER=gitea
+      - GITEA__database__PASSWD=gitea
+    restart: unless-stopped
+    volumes:
+      - gitea:/data
+    ports:
+      - "3000:3000"
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.quay-app.rule=Host(`git.localhost.direct`)'
+      - "traefik.http.services.quay-app.loadbalancer.server.port=3000"
+      - 'traefik.http.routers.quay-app.entrypoints=web,websecure'
+    depends_on:
+      gitea-db:
+        condition: service_healthy
+        
+  gitea-db:
+    user: postgres
+    container_name: gitea-db
+    restart: unless-stopped
+    image: docker.io/library/postgres:12.1
+    environment:
+      POSTGRES_USER: "gitea"
+      POSTGRES_PASSWORD: "gitea"
+      POSTGRES_DB: "gitea"
+    volumes:
+      - gitea-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gitea -d gitea"]
+      interval: 10s
+      timeout: 9s
+      retries: 3
+      start_period: 10s
 
   app:
     container_name: quay
