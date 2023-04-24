@@ -40,13 +40,13 @@ services:
       - "3000:3000"
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.quay-app.rule=Host(`git.localhost.direct`)'
-      - "traefik.http.services.quay-app.loadbalancer.server.port=3000"
-      - 'traefik.http.routers.quay-app.entrypoints=web,websecure'
+      - 'traefik.http.routers.gitea-app.rule=Host(`git.localhost.direct`)'
+      - "traefik.http.services.gitea-app.loadbalancer.server.port=3000"
+      - 'traefik.http.routers.gitea-app.entrypoints=web,websecure'
     depends_on:
       gitea-db:
         condition: service_healthy
-        
+
   gitea-db:
     user: postgres
     container_name: gitea-db
