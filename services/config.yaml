@@ -1,6 +1,7 @@
 ALLOWED_OCI_ARTIFACT_TYPES:
     application/vnd.oci.image.config.v1+json:
         - application/vnd.oci.image.layer.v1.tar+zstd
+        - application/vnd.in-toto+json
     application/vnd.sylabs.sif.config.v1+json:
         - application/vnd.sylabs.sif.layer.v1+tar
 AUTHENTICATION_TYPE: Database
